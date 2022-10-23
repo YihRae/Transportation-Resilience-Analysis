@@ -1,0 +1,16 @@
+[core]
+	repositoryformatversion = 0
+	filemode = false
+	bare = false
+	logallrefupdates = true
+	symlinks = false
+	ignorecase = true
+[remote "y"]
+	url = git@github.com:YihRae/Transportation-Resilience-Analysis.git
+	fetch = +refs/heads/*:refs/remotes/y/*
+[user]
+	name = YihRae
+	email = yihrae@cumt.edu.cn
+[remote "origin"]
+	url = https://github.com/YihRae/Transportation-Resilience-Analysis.git
+	fetch = +refs/heads/*:refs/remotes/origin/*
