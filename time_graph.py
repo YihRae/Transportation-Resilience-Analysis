@@ -4,33 +4,38 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-sns.set(style="darkgrid")
+
+def divide_graph(n_data, h_time, t_time):
+    slice_class = n_data['TIMESLICE'].unique()
+    divide_net = [n_data[n_data['TIMESLICE'].isin([c])].reset_index(drop=True)
+                  for c in slice_class]
+    return slice_class[h_time], slice_class[t_time], divide_net[h_time: t_time + 1]
 
 
-def cal_idx(idx, timeslice, vsize):
-    return idx + vsize * (timeslice - 1)
-
-
-def build(v_size, e_data, e_id, n_data):
+def build(v_size, e_data, e_id, n_data, h_time, t_time):
     edge_ret = []
+    time_len = t_time - h_time + 1
+    t_min, t_max, divide_net = divide_graph(n_data, h_time, t_time)
+
+    def cal_idx(idx, timeslice, vsize):
+        return idx + vsize * (timeslice - t_min)
 
     def add(u, v, w):
         edge_ret[u].append((v, w))
 
     dict_edge = {}
-    slice_class = n_data['TIMESLICE'].unique()
-    edge_ret = [[] for i in range(v_size * int(slice_class[-1]) + 5)]
-    divide_net = [n_data[n_data['TIMESLICE'].isin([c])].reset_index(drop=True)
-                  for c in slice_class]
+
+    edge_ret = [[] for i in range(v_size * time_len + 5)]
+
     for i in range(e_id.shape[0]):
         dict_edge[e_id.loc[i, 'ID']] = e_id.loc[i, 'INDEX']
 
-    for i in range(1, len(slice_class)):
+    for i in range(1, time_len):
         for j in range(v_size):
             add(cal_idx(j, i, v_size), cal_idx(j, i - 1, v_size), 0)
             add(cal_idx(j, i - 1, v_size), cal_idx(j, i, v_size), 0)
     for net_part in divide_net:
-        slice = net_part.loc[0, 'TIMESLICE']
+        t_slice = net_part.loc[0, 'TIMESLICE']
         for i in range(net_part.shape[0]):
             cur_id = net_part.loc[i, 'ID']
             cur_idx = int(dict_edge.get(cur_id, '0'))
@@ -39,8 +44,9 @@ def build(v_size, e_data, e_id, n_data):
             if e_data.loc[cur_idx, 'JAM'] > net_part.loc[i, 'SPEED']:
                 cur_fr = e_data.loc[cur_idx, 'FR']
                 cur_to = e_data.loc[cur_idx, 'TO']
-                add(cal_idx(cur_fr, slice, v_size), cal_idx(cur_to, slice, v_size), 1)
-    return int(slice_class[-1]), edge_ret
+                add(cal_idx(cur_fr, t_slice, v_size),
+                    cal_idx(cur_to, t_slice, v_size), 1)
+    return time_len, edge_ret
 
 
 def cal_res(v_size, edge, file_n):
@@ -80,6 +86,8 @@ def cal_res(v_size, edge, file_n):
 
 if __name__ == '__main__':
     f_name = './data/dataset/GM_road_speed_data' + '_' + '0617' + '.csv'
+    head_time = 0
+    tail_time = 285
     # 0615时间片不全 0620数据极少 0619和0620为周末其余为工作日
     net_data = pd.read_csv(f_name, usecols=['SPEED', 'DATE',
                                             'TIMESLICE', 'ID'])
@@ -89,5 +97,6 @@ if __name__ == '__main__':
     edge_data = pd.read_csv('data/graph/edge_data.csv', index_col=0)
     edge_id = pd.read_csv('data/graph/edge_id.csv', index_col=0)
     vertex_size = vertex_data.shape[0]
-    slice_max, edge = build(vertex_size, edge_data, edge_id, net_data)
-    cal_res(vertex_size * slice_max, edge, '0617')
+    slice_len, edge_set = build(vertex_size, edge_data, edge_id,
+                                net_data, head_time, tail_time)
+    cal_res(vertex_size * slice_len, edge_set, '0617')
