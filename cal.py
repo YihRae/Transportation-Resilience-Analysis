@@ -9,7 +9,7 @@ def dict_to_csv(dtc, idx1, idx2, durl):
     pd.DataFrame(dtc_t).to_csv(durl, encoding='utf-8')
 
 
-file_name = './data/result/result_0618.csv'
+file_name = './data/result/result_0617.csv'
 d = {}
 df = pd.read_csv(file_name)
 a = np.array(df)[:, 1].tolist()
@@ -18,4 +18,4 @@ for x in a:
         d[x] = 1
     else:
         d[x] += 1
-dict_to_csv(d, 'F', 'N', 'd18.csv')
+dict_to_csv(d, 'F', 'N', 'd17.csv')
