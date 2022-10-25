@@ -92,7 +92,7 @@ def cal_res(t_len, init_vsize, edge, file_n, file_save):
     print(len(tmp))
     df = pd.DataFrame({'F': ret, 'T': t_data, 'S': c_st, 'E': c_ed})
     df.to_csv(file_save + '/result_' + file_n + '.csv')
-    sns.distplot(df['F'], hist=True, kde=True, bins=100)
+    sns.distplot(df['F'], hist=True, kde=True, bins=500)
     plt.savefig(file_save + "/frequency_" + file_n + '.jpg')
     plt.show()
 
