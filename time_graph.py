@@ -45,22 +45,27 @@ def build(v_size, e_data, e_id, n_data, h_time, t_time):
     return t_min, t_max, time_len, edge_ret
 
 
-def cal_res(t_len, init_vsize, edge, file_n):
+def cal_res(t_len, init_vsize, edge, file_n, file_save):
     v_size = init_vsize * t_len
     vis = [False for _ in range(v_size)]
     ret = []
     st = []
-    T_data = []
+    c_st = []
+    c_ed = []
+    t_data = []
+    tmp = {}
     for ver in range(v_size):
         if vis[ver]:
             continue
         st.append(ver)
         vis[ver] = True
         res = 0
-        cur_tmin = t_len + 1
+        cur_tmin = ver // init_vsize
         cur_tmax = 0
+        ed_tmp = ''
         while len(st) > 0:
             cur = st[-1]
+            tmp[cur % t_len] = 1
             st.pop()
             flag = False
             for e in edge[cur]:
@@ -68,8 +73,10 @@ def cal_res(t_len, init_vsize, edge, file_n):
                     flag = True
                     break
             if not flag:
+                if ed_tmp != '':
+                    ed_tmp += '_'
+                ed_tmp += str(cur % t_len)
                 continue
-            cur_tmin = min(cur_tmin, cur // init_vsize)
             cur_tmax = max(cur_tmax, cur // init_vsize)
             for e in edge[cur]:
                 lst = int(e[0])
@@ -78,17 +85,20 @@ def cal_res(t_len, init_vsize, edge, file_n):
                     vis[lst] = True
                     st.append(lst)
         if res > 0:
-            T_data.append(cur_tmax - cur_tmin + 1)
+            c_ed.append(ed_tmp)
+            t_data.append(cur_tmax - cur_tmin + 1)
+            c_st.append(ver % t_len)
             ret.append(res)
-    df = pd.DataFrame({'F': ret, 'T': T_data})
-    df.to_csv('./data/result/result_' + file_n + '.csv')
+    print(len(tmp))
+    df = pd.DataFrame({'F': ret, 'T': t_data, 'S': c_st, 'E': c_ed})
+    df.to_csv(file_save + '/result_' + file_n + '.csv')
     sns.distplot(df['F'], hist=True, kde=True, bins=100)
-    plt.savefig("./data/result/frequency_" + file_n + '.jpg')
+    plt.savefig(file_save + "/frequency_" + file_n + '.jpg')
     plt.show()
 
 
 if __name__ == '__main__':
-    f_name = './data/dataset/GM_road_speed_data' + '_' + '0617' + '.csv'
+    f_name = './data/dataset/GM_speed/GM_road_speed_data' + '_' + '0617' + '.csv'
     head_time = 0
     tail_time = 285
     # 0615时间片不全 0620数据极少 0619和0620为周末其余为工作日
@@ -101,4 +111,4 @@ if __name__ == '__main__':
     vertex_size = vertex_data.shape[0]
     time_min, time_max, slice_len, edge_set = build(vertex_size, edge_data, edge_id,
                                                     net_data, head_time, tail_time)
-    cal_res(tail_time - head_time + 1, vertex_size, edge_set, '0617')
+    cal_res(tail_time - head_time + 1, vertex_size, edge_set, '0617', './data/result_GM')

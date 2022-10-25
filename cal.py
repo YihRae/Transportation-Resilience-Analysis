@@ -9,21 +9,17 @@ def dict_to_csv(dtc, idx1, idx2, durl):
     pd.DataFrame(dtc_t).to_csv(durl, encoding='utf-8')
 
 
-file_name = './data/result/result_0617.csv'
-d = {}
-e = {}
-df = pd.read_csv(file_name)
-a = np.array(df)[:, 1].tolist()
-b = np.array(df)[:, 2].tolist()
-for x in a:
-    if d.get(x, 0) == 0:
-        d[x] = 1
-    else:
-        d[x] += 1
-for x in b:
-    if e.get(x, 0) == 0:
-        e[x] = 1
-    else:
-        e[x] += 1
-dict_to_csv(d, 'F', 'N', 'F17.csv')
-dict_to_csv(e, 'T', 'N', 'T17.csv')
+file_name = './data/dataset/GM_speed/result/result_0617.csv'
+a = []
+b = []
+df = pd.read_csv(file_name, index_col=0)
+k = df.shape[1]
+for i in range(k):
+    a.append({})
+    b.append(np.array(df)[:, i].tolist())
+    for x in b[i]:
+        if a[i].get(x, 0) == 0:
+            a[i][x] = 1
+        else:
+            a[i][x] += 1
+    dict_to_csv(a[i], df.columns[i], 'N', df.columns[i] + '17.csv')
