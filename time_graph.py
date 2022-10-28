@@ -2,6 +2,7 @@
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import random as rd
 import xlwt
 
 
@@ -76,7 +77,7 @@ def cal_res(t_len, init_vsize, edge, file_n, file_save, v_c_cnt):
             if not flag:
                 if ed_tmp != '':
                     ed_tmp += '_'
-                ed_tmp += str(cur % t_len)
+                ed_tmp += str(cur % init_vsize)
                 continue
             cur_tmax = max(cur_tmax, cur // init_vsize)
             for e in edge[cur]:
@@ -86,7 +87,7 @@ def cal_res(t_len, init_vsize, edge, file_n, file_save, v_c_cnt):
                     vis[lst] = True
                     st.append(lst)
         if res > 0:
-            cur_id = ver % t_len
+            cur_id = ver % init_vsize
             v_c_cnt[cur_id].append(res)
             c_ed.append(ed_tmp)
             t_data.append(cur_tmax - cur_tmin + 1)
@@ -102,7 +103,7 @@ def cal_res(t_len, init_vsize, edge, file_n, file_save, v_c_cnt):
 if __name__ == '__main__':
     file_head = './data/dataset/speed/road_speed_data_4-'
     file_list = []
-    for i in range(6, 20):
+    for i in range(9, 14):
         if i < 10:
             file_list.append(file_head + '0' + str(i) + '.csv')
         else:
@@ -149,8 +150,19 @@ if __name__ == '__main__':
         cnt += 1
         if cnt == 20:
             cnt = 0
-            xl[xlid].save('./data/result_speed/cluster' + str(xlid) + '.xls')
+            xl[xlid].save('./data/result_speed/cluster/cluster' + str(xlid) + '.xls')
             xlid += 1
             xl_sh = xl[xlid].add_sheet('result')
     if cnt > 0:
-        xl[xlid].save('./data/result_speed/cluster' + str(xlid) + '.xls')
+        xl[xlid].save('./data/result_speed/cluster/cluster' + str(xlid) + '.xls')
+    # for thenum in range(5):
+    #     idx = [rd.randint(0, vertex_size - 1) for _ in range(400)]
+    #     d_cv = {}
+    #     for i in idx:
+    #         for j in range(len(vertex_cluster[i])):
+    #             if d_cv.get(vertex_cluster[i][j], 0) == 0:
+    #                 d_cv[vertex_cluster[i][j]] = 1
+    #             else:
+    #                 d_cv[vertex_cluster[i][j]] += 1
+    #     pd.DataFrame({'F': d_cv.keys(), 'N': d_cv.values()}) \
+    #         .sort_values(by=['F'], ascending=False).to_excel(str(thenum) + 'F.xlsx')

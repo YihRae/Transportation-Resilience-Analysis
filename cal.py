@@ -10,7 +10,7 @@ def dict_to_csv(dtc, idx1, idx2, durl):
         .reset_index(drop=True).to_csv(durl, encoding='utf-8')
 
 
-file_name = './data/result_speed/result_11.csv'
+file_name = './data/result_speed/result_10.csv'
 a = []
 b = []
 df = pd.read_csv(file_name, index_col=0)
@@ -23,4 +23,4 @@ for i in range(k):
             a[i][x] = 1
         else:
             a[i][x] += 1
-    dict_to_csv(a[i], df.columns[i], 'N', df.columns[i] + '411.csv')
+    dict_to_csv(a[i], df.columns[i], 'N', df.columns[i] + '410.csv')
