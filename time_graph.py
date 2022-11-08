@@ -49,7 +49,7 @@ def build(v_size, e_data, e_id, n_data, h_time, t_time):
     return t_min, t_max, time_len, edge_ret
 
 
-def cal_res(t_len, init_vsize, edge, file_n, file_save, v_c_cnt):
+def cal_res(t_len, init_vsize, edge, file_n, file_save, e_c_cnt, v_2_e):
     v_size = init_vsize * t_len
     vis = [False for _ in range(v_size)]
     ret = []
@@ -58,6 +58,7 @@ def cal_res(t_len, init_vsize, edge, file_n, file_save, v_c_cnt):
     c_ed = []
     t_data = []
     for ver in range(v_size):
+        c_monitor = [0 for _ in range(t_len + 5)]
         if vis[ver]:
             continue
         st.append(ver)
@@ -66,6 +67,7 @@ def cal_res(t_len, init_vsize, edge, file_n, file_save, v_c_cnt):
         cur_tmin = ver // init_vsize
         cur_tmax = 0
         ed_tmp = ''
+        init_edge = []
         while len(st) > 0:
             cur = st[-1]
             st.pop()
@@ -81,18 +83,25 @@ def cal_res(t_len, init_vsize, edge, file_n, file_save, v_c_cnt):
                 continue
             cur_tmax = max(cur_tmax, cur // init_vsize)
             for e in edge[cur]:
-                lst = int(e[0])
+                nxt = int(e[0])
                 res += int(e[1])
-                if not vis[lst]:
-                    vis[lst] = True
-                    st.append(lst)
+                if not vis[nxt]:
+                    vis[nxt] = True
+                    st.append(nxt)
+                if int(e[1]) == 1:
+                    if cur == ver:
+                        init_edge.append(v_2_e[(cur % init_vsize,
+                                                nxt % init_vsize)])
+                    c_monitor[cur // init_vsize] += 1
         if res > 0:
-            cur_id = ver % init_vsize
-            v_c_cnt[cur_id].append(res)
+            for e in init_edge:
+                e_c_cnt[e].append(res)
+            c_st.append(ver % init_vsize)
             c_ed.append(ed_tmp)
             t_data.append(cur_tmax - cur_tmin + 1)
-            c_st.append(cur_id)
             ret.append(res)
+        if res > 200:
+            print(c_monitor[cur_tmin: cur_tmax + 1])
     df = pd.DataFrame({'F': ret, 'T': t_data, 'S': c_st, 'E': c_ed})
     df.to_csv(file_save + '/result_' + file_n + '.csv')
     sns.distplot(df['F'], hist=True, kde=True, bins=500)
@@ -103,7 +112,8 @@ def cal_res(t_len, init_vsize, edge, file_n, file_save, v_c_cnt):
 if __name__ == '__main__':
     file_head = './data/dataset/speed/road_speed_data_4-'
     file_list = []
-    for i in range(9, 14):
+    cnt = 9
+    for i in range(cnt, cnt + 3):
         if i < 10:
             file_list.append(file_head + '0' + str(i) + '.csv')
         else:
@@ -113,35 +123,38 @@ if __name__ == '__main__':
     edge_data = pd.read_csv('data/graph/edge_data.csv', index_col=0)
     edge_id = pd.read_csv('data/graph/edge_id.csv', index_col=0)
     vertex_size = vertex_data.shape[0]
-    head_time = 0
-    tail_time = 287
+    edge_size = edge_id.shape[0]
+    head_time = 72
+    tail_time = 239
     # 0615时间片不全 0620数据极少 0619和0620为周末其余为工作日
     net_data = [pd.read_csv(f_name, usecols=['SPEED', 'DATE',
                                              'TIMESLICE', 'ID']) for f_name in file_list]
-    cnt = 5
-    vertex_cluster = [[] for _ in range(vertex_size + 5)]
+    edge_cluster = [[] for _ in range(edge_size + 5)]
+    v_to_e = {}
+    for e in range(edge_size):
+        v_to_e[(edge_data.loc[e, 'FR'], edge_data.loc[e, 'TO'])] = e
     for net in net_data:
         time_min, time_max, slice_len, edge_set = build(vertex_size, edge_data, edge_id,
                                                         net, head_time, tail_time)
-        cnt += 1
         cal_res(time_max - time_min + 1, vertex_size, edge_set, str(cnt),
-                './data/result_speed', vertex_cluster)
-    xl =[xlwt.Workbook() for _ in range((vertex_size + 19) // 20 + 2)]
+                './data/result_speed', edge_cluster, v_to_e)
+        cnt += 1
+    xl = [xlwt.Workbook() for _ in range((edge_size + 19) // 20 + 2)]
     xl_sh = xl[0].add_sheet('result')
     cnt = 0
     xlid = 0
-    for i in range(vertex_size):
-        num = sum(vertex_cluster[i])
+    for i in range(edge_size):
+        num = sum(edge_cluster[i])
         if num == 0:
             continue
         xl_sh.write(0, cnt * 2, i)
         xl_sh.write(1, cnt * 2, num)
         d_tmp = {}
-        for j in range(len(vertex_cluster[i])):
-            if d_tmp.get(vertex_cluster[i][j], 0) == 0:
-                d_tmp[vertex_cluster[i][j]] = 1
+        for j in range(len(edge_cluster[i])):
+            if d_tmp.get(edge_cluster[i][j], 0) == 0:
+                d_tmp[edge_cluster[i][j]] = 1
             else:
-                d_tmp[vertex_cluster[i][j]] += 1
+                d_tmp[edge_cluster[i][j]] += 1
         num = 0
         for d_key in d_tmp:
             xl_sh.write(num + 2, cnt * 2, d_key)
@@ -155,14 +168,14 @@ if __name__ == '__main__':
             xl_sh = xl[xlid].add_sheet('result')
     if cnt > 0:
         xl[xlid].save('./data/result_speed/cluster/cluster' + str(xlid) + '.xls')
-    # for thenum in range(5):
-    #     idx = [rd.randint(0, vertex_size - 1) for _ in range(400)]
-    #     d_cv = {}
-    #     for i in idx:
-    #         for j in range(len(vertex_cluster[i])):
-    #             if d_cv.get(vertex_cluster[i][j], 0) == 0:
-    #                 d_cv[vertex_cluster[i][j]] = 1
-    #             else:
-    #                 d_cv[vertex_cluster[i][j]] += 1
-    #     pd.DataFrame({'F': d_cv.keys(), 'N': d_cv.values()}) \
-    #         .sort_values(by=['F'], ascending=False).to_excel(str(thenum) + 'F.xlsx')
+    for thenum in range(5):
+        idx = [rd.randint(0, edge_size - 1) for _ in range(600)]
+        d_cv = {}
+        for i in idx:
+            for j in range(len(edge_cluster[i])):
+                if d_cv.get(edge_cluster[i][j], 0) == 0:
+                    d_cv[edge_cluster[i][j]] = 1
+                else:
+                    d_cv[edge_cluster[i][j]] += 1
+        pd.DataFrame({'F': d_cv.keys(), 'N': d_cv.values()}) \
+            .sort_values(by=['F'], ascending=False).to_excel(str(thenum) + 'F.xlsx')
