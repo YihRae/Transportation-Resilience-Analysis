@@ -18,22 +18,39 @@ def p3(x):
     return x * x * x
 
 
+def find(x, f):
+    if f[x] == x:
+        return x
+    f[x] = find(f[x], f)
+    return f[x]
+
+
 if __name__ == '__main__':
     # tst = []
     # for i in range(1000):
     #     tst.append(power_random(1, 4))
     # pd.DataFrame({'F': tst}).sort_values(by=['F'], ascending=False) \
     #     .reset_index(drop=True).to_csv('test.csv', encoding='utf-8')
-    N = 10000
+    N = 8000
     c = []
-    b = 4.0
+    b = 6.0
     PI = math.acos(-1.0)
     s_init = []
     p_s = []
+    dx = [45, 45, 55, 55]
+    dy = [45, 55, 45, 55]
+    X, Y, Z = (100, 100, 100)
+    cp = [[] for _ in range((X + 1) * (Y + 1))]
     for _ in range(N):
-        x = rd.randint(0, 100)
-        y = rd.randint(0, 100)
-        z = rd.randint(0, 100)
+        tp = rd.randint(0, 10)
+        if tp == 0:
+            x = rd.randint(0, X)
+            y = rd.randint(0, Y)
+        else:
+            tpp = rd.randint(0, 3)
+            x = dx[tpp]
+            y = dy[tpp]
+        z = rd.randint(0, Z)
         r = power_random(1, b)
         c.append((x, y, z, r))
         s_init.append(math.log(4 / 3 * PI * p3(r)))
@@ -52,12 +69,25 @@ if __name__ == '__main__':
             for k in range(3):
                 p += p2(c[i][k] - c[j][k])
             if p < p2(c[i][3] + c[j][3]):
-                f[i] = f[j]
+                if c[i][2] > c[j][2]:
+                    f[i] = find(f[j], f)
+                else:
+                    f[j] = find(f[i], f)
                 break
-        s[f[i]] += 4 / 3 * p3(c[i][3]) * PI
+        s[find(i, f)] += 4 / 3 * p3(c[i][3]) * PI
     for i in range(N):
         if s[i] > 0:
             res.append(s[i])
+            cp[c[i][0] + c[i][1] * X].append(s[i])
+    dl = {}
+    ds = {}
+    for i in range(N):
+        dl[i] = sum(cp[i])
+        ds[i] = len(cp[i])
+    pd.DataFrame({'ID': dl.keys(), 'N': dl.values()}).sort_values(by=['N'], ascending=False) \
+        .reset_index(drop=True).to_csv('sim_size.csv', encoding='utf-8')
+    pd.DataFrame({'ID': ds.keys(), 'N': ds.values()}).sort_values(by=['N'], ascending=False) \
+        .reset_index(drop=True).to_csv('sim_num.csv', encoding='utf-8')
     res.sort(reverse=True)
     res_len = len(res)
     for i in range(res_len):

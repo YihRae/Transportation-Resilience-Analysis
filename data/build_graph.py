@@ -28,11 +28,14 @@ if __name__ == '__main__':
     edge_data = []
     vertex_data = []
     for idx in range(road_size):
-        name_from = (road_network.loc[idx, r_name], road_network.loc[idx, r_from])
-        name_to = (road_network.loc[idx, r_name], road_network.loc[idx, r_to])
-        if name_from[0] == name_from[1] or name_from[0] == name_to[1] or \
-                name_from[1] == name_to[1]:
-            continue
+        if road_network.loc[idx, r_name] < road_network.loc[idx, r_from]:
+            name_from = (road_network.loc[idx, r_name], road_network.loc[idx, r_from])
+        else:
+            name_from = (road_network.loc[idx, r_from], road_network.loc[idx, r_name])
+        if road_network.loc[idx, r_name]< road_network.loc[idx, r_to]:
+            name_to = (road_network.loc[idx, r_name], road_network.loc[idx, r_to])
+        else:
+            name_to = (road_network.loc[idx, r_to], road_network.loc[idx, r_name])
         if junction_id.get(name_from, -1) == -1:
             junction_id[name_from] = id_cur
             id_cur = id_cur + 1

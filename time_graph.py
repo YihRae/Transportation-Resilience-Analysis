@@ -28,7 +28,7 @@ def build(v_size, e_data, e_id, n_data, h_time, t_time):
 
     dict_edge = {}
     edge_ret = [[] for _ in range(v_size * time_len + 5)]
-    for i in range(e_id.shape[0]):
+    for i in range(e_data.shape[0]):
         dict_edge[e_id.loc[i, 'ID']] = e_id.loc[i, 'INDEX']
     for i in range(1, time_len):
         for j in range(v_size):
@@ -100,8 +100,8 @@ def cal_res(t_len, init_vsize, edge, file_n, file_save, e_c_cnt, v_2_e):
             c_ed.append(ed_tmp)
             t_data.append(cur_tmax - cur_tmin + 1)
             ret.append(res)
-        if res > 200:
-            print(c_monitor[cur_tmin: cur_tmax + 1])
+        # if res > 200:
+        #     print(c_monitor[cur_tmin: cur_tmax + 1])
     df = pd.DataFrame({'F': ret, 'T': t_data, 'S': c_st, 'E': c_ed})
     df.to_csv(file_save + '/result_' + file_n + '.csv')
     sns.distplot(df['F'], hist=True, kde=True, bins=500)
@@ -120,10 +120,10 @@ if __name__ == '__main__':
             file_list.append(file_head + str(i) + '.csv')
     # 读取路网
     vertex_data = pd.read_csv('data/graph/vertex_data.csv', index_col=0)
-    edge_data = pd.read_csv('data/graph/edge_data.csv', index_col=0)
-    edge_id = pd.read_csv('data/graph/edge_id.csv', index_col=0)
+    edge_data = pd.read_csv('data/graph/sub_edge_data.csv', index_col=0)
+    edge_id = pd.read_csv('data/graph/sub_edge_id.csv', index_col=0)
     vertex_size = vertex_data.shape[0]
-    edge_size = edge_id.shape[0]
+    edge_size = edge_data.shape[0]
     head_time = 72
     tail_time = 239
     # 0615时间片不全 0620数据极少 0619和0620为周末其余为工作日
@@ -143,12 +143,20 @@ if __name__ == '__main__':
     xl_sh = xl[0].add_sheet('result')
     cnt = 0
     xlid = 0
+    ec_num = {}
+    ec_siz = {}
+    ec_id = []
     for i in range(edge_size):
-        num = sum(edge_cluster[i])
+        ec_id.append(edge_id.loc[i, 'ID'])
+        siz = sum(edge_cluster[i])
+        num = len(edge_cluster[i])
+        ec_siz[i] = siz
+        ec_num[i] = num
         if num == 0:
             continue
         xl_sh.write(0, cnt * 2, i)
-        xl_sh.write(1, cnt * 2, num)
+        xl_sh.write(1, cnt * 2, siz)
+        xl_sh.write(1, cnt * 2 + 1, num)
         d_tmp = {}
         for j in range(len(edge_cluster[i])):
             if d_tmp.get(edge_cluster[i][j], 0) == 0:
@@ -168,6 +176,10 @@ if __name__ == '__main__':
             xl_sh = xl[xlid].add_sheet('result')
     if cnt > 0:
         xl[xlid].save('./data/result_speed/cluster/cluster' + str(xlid) + '.xls')
+    pd.DataFrame({'ID': ec_id, 'N': ec_num.values(), 'S': ec_siz.values()}).sort_values(by=['N'], ascending=False) \
+        .reset_index(drop=True).to_csv('./data/result_speed/cluster/ec_num.csv', encoding='utf-8')
+    pd.DataFrame({'ID': ec_id, 'S': ec_siz.values(), 'N': ec_num.values()}).sort_values(by=['S'], ascending=False) \
+        .reset_index(drop=True).to_csv('./data/result_speed/cluster/ec_siz.csv', encoding='utf-8')
     for thenum in range(5):
         idx = [rd.randint(0, edge_size - 1) for _ in range(600)]
         d_cv = {}

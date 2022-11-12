@@ -23,4 +23,4 @@ for i in range(k):
             a[i][x] = 1
         else:
             a[i][x] += 1
-    dict_to_csv(a[i], df.columns[i], 'N', df.columns[i] + '193.csv')
+    dict_to_csv(a[i], df.columns[i], 'N', './cal/' + df.columns[i] + '409.csv')
