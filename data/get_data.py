@@ -9,13 +9,13 @@ import warnings
 warnings.filterwarnings("ignore")
 
 # 参数设置
-RequestURL = 'https://opendata.sz.gov.cn/api/29200_00403602/1/service.xhtml'
+RequestURL = 'https://opendata.sz.gov.cn/api/29200_03103690/1/service.xhtml'
 Rows = 5000
-DataSize = 2133696
+DataSize = 1596
 PageSize = (DataSize + Rows - 1) // Rows
 appKey = '6afc6b089c694e6dbe4dfc266d404e67'
 header = headers = {'User-Agent': 'Custom'}
-FileName = 'GPS_data_2.csv'
+FileName = 'W.csv'
 
 # 测试 返回200说明设置成功
 print('Page Size:', PageSize)
@@ -25,7 +25,7 @@ print(strhtml.status_code)
 
 # 读取
 pd_data = []
-for page in range(300 + 1, PageSize + 1):
+for page in range(PageSize + 1):
     URL = RequestURL + '?appKey=' + appKey + \
           '&page=' + str(page) + '&rows=' + str(Rows)
     num = 0

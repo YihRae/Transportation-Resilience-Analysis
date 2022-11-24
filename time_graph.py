@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 import random as rd
 import xlwt
 
-
 def divide_graph(n_data, h_time, t_time):
     slice_class = n_data['TIMESLICE'].unique()
     h_time = min(h_time, len(slice_class) - 1)
@@ -90,8 +89,7 @@ def cal_res(t_len, init_vsize, edge, file_n, file_save, e_c_cnt, v_2_e):
                     st.append(nxt)
                 if int(e[1]) == 1:
                     if cur == ver:
-                        init_edge.append(v_2_e[(cur % init_vsize,
-                                                nxt % init_vsize)])
+                        init_edge.append(v_2_e[(cur % init_vsize, nxt % init_vsize)])
                     c_monitor[cur // init_vsize] += 1
         if res > 0:
             for e in init_edge:
@@ -108,12 +106,11 @@ def cal_res(t_len, init_vsize, edge, file_n, file_save, e_c_cnt, v_2_e):
     plt.savefig(file_save + "/frequency_" + file_n + '.jpg')
     # plt.show()
 
-
 if __name__ == '__main__':
     file_head = './data/dataset/speed/road_speed_data_4-'
     file_list = []
     cnt = 9
-    for i in range(cnt, cnt + 3):
+    for i in range(cnt, cnt + 4):
         if i < 10:
             file_list.append(file_head + '0' + str(i) + '.csv')
         else:
@@ -124,70 +121,74 @@ if __name__ == '__main__':
     edge_id = pd.read_csv('data/graph/sub_edge_id.csv', index_col=0)
     vertex_size = vertex_data.shape[0]
     edge_size = edge_data.shape[0]
-    head_time = 72
-    tail_time = 239
+    head_time = 192
+    tail_time = 221
     # 0615时间片不全 0620数据极少 0619和0620为周末其余为工作日
-    net_data = [pd.read_csv(f_name, usecols=['SPEED', 'DATE',
-                                             'TIMESLICE', 'ID']) for f_name in file_list]
+    net_data = [pd.read_csv(f_name, usecols=['SPEED', 'DATE', 'TIMESLICE', 'ID']) for f_name in file_list]
     edge_cluster = [[] for _ in range(edge_size + 5)]
     v_to_e = {}
     for e in range(edge_size):
         v_to_e[(edge_data.loc[e, 'FR'], edge_data.loc[e, 'TO'])] = e
     for net in net_data:
-        time_min, time_max, slice_len, edge_set = build(vertex_size, edge_data, edge_id,
-                                                        net, head_time, tail_time)
-        cal_res(time_max - time_min + 1, vertex_size, edge_set, str(cnt),
+        time_min, time_max, slice_len, edge_set = build(vertex_size, edge_data, edge_id, net, head_time, tail_time)
+        cal_res(time_max - time_min + 1, vertex_size, edge_set, str(head_time),
                 './data/result_speed', edge_cluster, v_to_e)
         cnt += 1
-    xl = [xlwt.Workbook() for _ in range((edge_size + 19) // 20 + 2)]
-    xl_sh = xl[0].add_sheet('result')
-    cnt = 0
-    xlid = 0
-    ec_num = {}
-    ec_siz = {}
-    ec_id = []
-    for i in range(edge_size):
-        ec_id.append(edge_id.loc[i, 'ID'])
-        siz = sum(edge_cluster[i])
-        num = len(edge_cluster[i])
-        ec_siz[i] = siz
-        ec_num[i] = num
-        if num == 0:
-            continue
-        xl_sh.write(0, cnt * 2, i)
-        xl_sh.write(1, cnt * 2, siz)
-        xl_sh.write(1, cnt * 2 + 1, num)
-        d_tmp = {}
-        for j in range(len(edge_cluster[i])):
-            if d_tmp.get(edge_cluster[i][j], 0) == 0:
-                d_tmp[edge_cluster[i][j]] = 1
-            else:
-                d_tmp[edge_cluster[i][j]] += 1
-        num = 0
-        for d_key in d_tmp:
-            xl_sh.write(num + 2, cnt * 2, d_key)
-            xl_sh.write(num + 2, cnt * 2 + 1, d_tmp[d_key])
-            num += 1
-        cnt += 1
-        if cnt == 20:
-            cnt = 0
-            xl[xlid].save('./data/result_speed/cluster/cluster' + str(xlid) + '.xls')
-            xlid += 1
-            xl_sh = xl[xlid].add_sheet('result')
-    if cnt > 0:
-        xl[xlid].save('./data/result_speed/cluster/cluster' + str(xlid) + '.xls')
-    pd.DataFrame({'ID': ec_id, 'N': ec_num.values(), 'S': ec_siz.values()}).sort_values(by=['N'], ascending=False) \
-        .reset_index(drop=True).to_csv('./data/result_speed/cluster/ec_num.csv', encoding='utf-8')
-    pd.DataFrame({'ID': ec_id, 'S': ec_siz.values(), 'N': ec_num.values()}).sort_values(by=['S'], ascending=False) \
-        .reset_index(drop=True).to_csv('./data/result_speed/cluster/ec_siz.csv', encoding='utf-8')
-    for thenum in range(5):
-        idx = [rd.randint(0, edge_size - 1) for _ in range(600)]
-        d_cv = {}
-        for i in idx:
-            for j in range(len(edge_cluster[i])):
-                if d_cv.get(edge_cluster[i][j], 0) == 0:
-                    d_cv[edge_cluster[i][j]] = 1
-                else:
-                    d_cv[edge_cluster[i][j]] += 1
-        pd.DataFrame({'F': d_cv.keys(), 'N': d_cv.values()}) \
-            .sort_values(by=['F'], ascending=False).to_excel(str(thenum) + 'F.xlsx')
+    # xl = [xlwt.Workbook() for _ in range((edge_size + 19) // 20 + 2)]
+    # xl_sh = xl[0].add_sheet('result')
+    # cnt = 0
+    # xlid = 0
+    # ec_num = {}
+    # ec_siz = {}
+    # ec_id = []
+    # for i in range(edge_size):
+    #     ec_id.append(edge_id.loc[i, 'ID'])
+    #     siz = sum(edge_cluster[i])
+    #     num = len(edge_cluster[i])
+    #     ec_siz[i] = siz
+    #     ec_num[i] = num
+    #     if num == 0:
+    #         continue
+    #     xl_sh.write(0, cnt * 2, i)
+    #     xl_sh.write(1, cnt * 2, siz)
+    #     xl_sh.write(1, cnt * 2 + 1, num)
+    #     d_tmp = {}
+    #     for j in range(len(edge_cluster[i])):
+    #         if d_tmp.get(edge_cluster[i][j], 0) == 0:
+    #             d_tmp[edge_cluster[i][j]] = 1
+    #         else:
+    #             d_tmp[edge_cluster[i][j]] += 1
+    #     num = 0
+    #     for d_key in d_tmp:
+    #         xl_sh.write(num + 2, cnt * 2, d_key)
+    #         xl_sh.write(num + 2, cnt * 2 + 1, d_tmp[d_key])
+    #         num += 1
+    #     cnt += 1
+    #     if cnt == 20:
+    #         cnt = 0
+    #         xl[xlid].save('./data/result_speed/cluster/cluster' + str(xlid) + '.xls')
+    #         xlid += 1
+    #         xl_sh = xl[xlid].add_sheet('result')
+    # if cnt > 0:
+    #     xl[xlid].save('./data/result_speed/cluster/cluster' + str(xlid) + '.xls')
+    # pd.DataFrame({'ID': ec_id, 'N': ec_num.values(), 'S': ec_siz.values()}).sort_values(by=['N'], ascending=False) \
+    #     .reset_index(drop=True).to_csv('./data/result_speed/cluster/ec_num.csv', encoding='utf-8')
+    # pd.DataFrame({'ID': ec_id, 'S': ec_siz.values(), 'N': ec_num.values()}).sort_values(by=['S'], ascending=False) \
+    #     .reset_index(drop=True).to_csv('./data/result_speed/cluster/ec_siz.csv', encoding='utf-8')
+    # ccnt = 0
+    # for N in range(100, 450, 50):
+    #     rd_node = {}
+    #     for thenum in range(10):
+    #         idx = [rd.randint(0, edge_size - 1) for _ in range(N)]
+    #         rd_node[thenum] = idx
+    #         d_cv = {}
+    #         for i in idx:
+    #             for j in range(len(edge_cluster[i])):
+    #                 if d_cv.get(edge_cluster[i][j], 0) == 0:
+    #                     d_cv[edge_cluster[i][j]] = 1
+    #                 else:
+    #                     d_cv[edge_cluster[i][j]] += 1
+    #         pd.DataFrame({'F': d_cv.keys(), 'N': d_cv.values()}) \
+    #             .sort_values(by=['F'], ascending=False).to_excel('./data/result_speed/F/' + str(ccnt) + 'F.xlsx')
+    #         ccnt += 1
+    #     pd.DataFrame(rd_node).to_csv('./data/result_speed/F/' + str(N) + 'rd.csv')
