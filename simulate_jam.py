@@ -1,6 +1,7 @@
 import pandas as pd
 import random as rd
 import math
+from scipy.special import gamma
 
 dx = [1, -1, 0, 0]
 dy = [0, 0, 1, -1]
@@ -25,65 +26,109 @@ def find(x, f):
     return f[x]
 
 
+def ine(a, b, c, x, y, z):
+    return p2(x) / p2(a) + p2(y) / p2(b) + p2(z) / p2(c) < 1
+
+
+def crs(e1, e2):
+    if ine(e1[3], e1[4], e1[5], e2[0] - e1[0], e2[1] - e1[1], e2[2] - e1[2]):
+        return True
+    px, py, pz = e2[0] - e1[0], e2[1] - e1[1], e2[2] - e1[2]
+    # print(e1, e2)
+    tmp = 1 - 1 / pow(p2(px) / p2(e1[3]) + p2(py) / p2(e1[4]) + p2(pz) / p2(e1[5]), 0.5)
+    qx, qy, qz = e1[0] + tmp * px, e1[1] + tmp * py, e1[2] + tmp * pz
+    return ine(e2[3], e2[4], e2[5], qx - e2[0], qy - e2[1], qz - e2[2])
+
+
 if __name__ == '__main__':
     # tst = []
     # for i in range(1000):
     #     tst.append(power_random(1, 4))
     # pd.DataFrame({'F': tst}).sort_values(by=['F'], ascending=False) \
     #     .reset_index(drop=True).to_csv('test.csv', encoding='utf-8')
-    N = 8000
+    dl = {}
+    ds = {}
+    norm = 3.0
+    v = p3(gamma(1 + 1 / norm)) / gamma(1 + 3 / norm)
     c = []
     b = 6.0
     PI = math.acos(-1.0)
     s_init = []
     p_s = []
+    xp, yp = 20, 20
+    xd = [1, -1, 0, 0]
+    yd = [0, 0, 1, -1]
     dx = [45, 45, 55, 55]
     dy = [45, 55, 45, 55]
-    X, Y, Z = (100, 100, 100)
-    cp = [[] for _ in range((X + 1) * (Y + 1))]
-    for _ in range(N):
-        tp = rd.randint(0, 10)
-        if tp == 0:
-            x = rd.randint(0, X)
-            y = rd.randint(0, Y)
-        else:
-            tpp = rd.randint(0, 3)
-            x = dx[tpp]
-            y = dy[tpp]
-        z = rd.randint(0, Z)
-        r = power_random(1, b)
-        c.append((x, y, z, r))
-        s_init.append(math.log(4 / 3 * PI * p3(r)))
-        p_s.append(math.log((_ + 1) / N))
-    s_init.sort(reverse=True)
-    f = []
-    s = [0 for _ in range(N)]
-    res = []
-    lns = []
-    ps = []
-    for i in range(N):
-        print(i)
-        f.append(i)
-        for j in range(0, i):
-            p = 0
+    X, Y, Z = (30, 30, 100)
+    N = X * Y * 5
+    for i in range(X * Y):
+        dl[i] = ds[i] = 0
+    for num in range(1):
+        cp = [[] for _ in range((X + 1) * (Y + 1))]
+        for i in range(X):
+            for j in range(Y):
+                for k in range(5):
+                    z = rd.randint(0, Z)
+                    r = power_random(1, b)
+                    c.append((i, j, z, r))
+                    s_init.append(math.log(8 * p3(r) * v))
+                    p_s.append(math.log((i * X + j + 1) / N))
+        s_init.sort(reverse=True)
+        f = []
+        s = [0 for _ in range(N)]
+        res = []
+        lns = []
+        ps = []
+        for i in range(N):
+            print(i)
+            f.append(i)
+            ai, bi, ci = c[i][3], c[i][3], c[i][3]
             for k in range(3):
-                p += p2(c[i][k] - c[j][k])
-            if p < p2(c[i][3] + c[j][3]):
-                if c[i][2] > c[j][2]:
-                    f[i] = find(f[j], f)
-                else:
-                    f[j] = find(f[i], f)
-                break
-        s[find(i, f)] += 4 / 3 * p3(c[i][3]) * PI
-    for i in range(N):
-        if s[i] > 0:
-            res.append(s[i])
-            cp[c[i][0] + c[i][1] * X].append(s[i])
-    dl = {}
-    ds = {}
-    for i in range(N):
-        dl[i] = sum(cp[i])
-        ds[i] = len(cp[i])
+                if c[i][0] == xp + xd[k] and c[i][1] == yp + yd[k]:
+                    ci /= 4
+                    ai *= 2
+                    bi *= 2
+            if c[i][0] == xp and c[i][1] == yp:
+                ci *= 16
+                ai /= 4
+                bi /= 4
+            for j in range(i):
+                if i == 4100 and j == 4095:
+                    print('ok')
+                p = 0
+                # for k in range(3):
+                #     p += pow(abs(c[i][k] - c[j][k]), norm)
+                # if p < pow(c[i][3] +  c[j][3], norm):
+                #     if c[i][2] > c[j][2]:
+                #         f[i] = find(f[j], f)
+                #     else:
+                #         f[j] = find(f[i], f)
+                #     break
+                aj, bj, cj = c[j][3], c[j][3], c[j][3]
+                for k in range(3):
+                    if c[j][0] == xp + xd[k] and c[j][1] == yp + yd[k]:
+                        cj /= 4
+                        aj *= 2
+                        bj *= 2
+                if c[j][0] == xp and c[j][1] == yp:
+                    cj *= 4
+                    aj /= 2
+                    bj /= 2
+                if crs((c[i][0], c[i][1], c[i][2], ai, bi, ci), (c[j][0], c[j][1], c[j][2], aj, bj, cj)):
+                    if c[i][2] > c[j][2]:
+                        f[i] = find(f[j], f)
+                        break
+                    else:
+                        f[j] = find(f[i], f)
+            s[find(i, f)] += 8 * p3(c[i][3]) * v
+        for i in range(N):
+            if s[i] > 0:
+                res.append(s[i])
+                cp[c[i][0] + c[i][1] * X].append(s[i])
+        for i in range(X * Y):
+            dl[i] += sum(cp[i])
+            ds[i] += len(cp[i])
     pd.DataFrame({'ID': dl.keys(), 'N': dl.values()}).sort_values(by=['N'], ascending=False) \
         .reset_index(drop=True).to_csv('sim_size.csv', encoding='utf-8')
     pd.DataFrame({'ID': ds.keys(), 'N': ds.values()}).sort_values(by=['N'], ascending=False) \
